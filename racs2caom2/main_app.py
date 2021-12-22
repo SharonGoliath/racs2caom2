@@ -77,30 +77,30 @@ from caom2pipe import manage_composable as mc
 
 
 __all__ = [
-    'BlankName',
+    'racsName',
     'COLLECTION',
     'APPLICATION', 
 ]
 
 
-APPLICATION = 'blank2caom2'
-COLLECTION = 'BLANK'
+APPLICATION = 'racs2caom2'
+COLLECTION = 'RACS'
 
 
-class BlankName(mc.StorageName):
+class racsName(mc.StorageName):
     """Naming rules:
     - support mixed-case file name storage, and mixed-case obs id values
     - support uncompressed files in storage
     """
 
-    BLANK_NAME_PATTERN = '*'
+    RACS_NAME_PATTERN = '*'
 
     def __init__(self, entry=None):
         self.fname_in_ad = entry
-        super(BlankName, self).__init__(
+        super(racsName, self).__init__(
             entry,
             COLLECTION, 
-            BlankName.BLANK_NAME_PATTERN, 
+            racsName.RACS_NAME_PATTERN, 
             fname_on_disk=entry,
             entry=entry,
         )
@@ -109,7 +109,7 @@ class BlankName(mc.StorageName):
         return True
 
 
-class BlankMapping(cc.TelescopeMapping):
+class racsMapping(cc.TelescopeMapping):
     def __init__(self, storage_name, headers):
         super().__init__(storage_name, headers)
 

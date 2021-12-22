@@ -66,8 +66,80 @@
 #
 # ***********************************************************************
 #
-from blank2caom2 import BlankName
+
+"""
+Implements the default entry point functions for the workflow 
+application.
+
+'run' executes based on either provided lists of work, or files on disk.
+'run_by_state' executes incrementally, usually based on time-boxed 
+intervals.
+"""
+
+import logging
+import sys
+import traceback
+
+from caom2pipe import run_composable as rc
+from racs2caom2 import fits2caom2_augmentation
 
 
-def test_is_valid():
-    assert BlankName('anything').is_valid()
+BLANK_BOOKMARK = 'racs_timestmap'
+META_VISITORS = [fits2caom2_augmentation]
+DATA_VISITORS = []
+
+
+def _run():
+    """
+    Uses a todo file to identify the work to be done.
+
+    :return 0 if successful, -1 if there's any sort of failure. Return status
+        is used by airflow for task instance management and reporting.
+    """
+    return rc.run_by_todo(
+        config=None, 
+        name_builder=None, 
+        meta_visitors=META_VISITORS,
+        data_visitors=DATA_VISITORS, 
+        chooser=None,
+    )
+
+
+def run():
+    """Wraps _run in exception handling, with sys.exit calls."""
+    try:
+        result = _run()
+        sys.exit(result)
+    except Exception as e:
+        logging.error(e)
+        tb = traceback.format_exc()
+        logging.debug(tb)
+        sys.exit(-1)
+
+
+def _run_state():
+    """Uses a state file with a timestamp to control which entries will be
+    processed.
+    """
+    return rc.run_by_state_ts(
+        config=None, 
+        name_builder=None,
+        bookmark_name=BLANK_BOOKMARK,
+        meta_visitors=META_VISITORS,
+        data_visitors=DATA_VISITORS, 
+        end_time=None,
+        source=None, 
+        chooser=None,
+    )
+
+
+def run_state():
+    """Wraps _run_state in exception handling."""
+    try:
+        _run_state()
+        sys.exit(0)
+    except Exception as e:
+        logging.error(e)
+        tb = traceback.format_exc()
+        logging.debug(tb)
+        sys.exit(-1)
