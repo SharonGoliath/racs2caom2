@@ -6,10 +6,10 @@ then
 fi
 
 if [[ ! -e ${PWD}/state.yml ]]; then
-  if [[ "${@}" == "blank_run_state" ]]; then
+  if [[ "${@}" == "racs_run_state" ]]; then
     yesterday=$(date -d yesterday "+%d-%b-%Y %H:%M")
     echo "bookmarks:
-    blank_timestamp:
+    racs_timestamp:
       last_record: $yesterday
 " > ${PWD}/state.yml
   else

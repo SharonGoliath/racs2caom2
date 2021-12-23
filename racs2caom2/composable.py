@@ -3,7 +3,7 @@
 # ******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 # *************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 #
-#  (c) 2020.                            (c) 2020.
+#  (c) 2019.                            (c) 2019.
 #  Government of Canada                 Gouvernement du Canada
 #  National Research Council            Conseil national de recherches
 #  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -68,66 +68,110 @@
 #
 
 """
-This module implements the ObsBlueprint mapping, as well as the workflow 
-entry point that executes the workflow.
+Implements the default entry point functions for the workflow 
+application.
+
+'run' executes based on either provided lists of work, or files on disk.
+'run_by_state' executes incrementally, usually based on time-boxed 
+intervals.
 """
 
-from caom2pipe import caom_composable as cc
+import logging
+import sys
+import traceback
+
+from caom2pipe import client_composable as clc
 from caom2pipe import manage_composable as mc
+from caom2pipe import name_builder_composable as nbc
+from caom2pipe import reader_composable as rdc
+from caom2pipe import run_composable as rc
+from caom2pipe import transfer_composable as tc
+from racs2caom2 import fits2caom2_augmentation, main_app
+from vos import Client
 
 
-__all__ = [
-    'BlankName',
-    'COLLECTION',
-    'APPLICATION', 
-]
+RACS_BOOKMARK = 'racs_timestmap'
+META_VISITORS = [fits2caom2_augmentation]
+DATA_VISITORS = []
 
 
-APPLICATION = 'blank2caom2'
-COLLECTION = 'BLANK'
-
-
-class BlankName(mc.StorageName):
-    """Naming rules:
-    - support mixed-case file name storage, and mixed-case obs id values
-    - support uncompressed files in storage
+def _run():
     """
+    Uses a todo file to identify the work to be done.
 
-    BLANK_NAME_PATTERN = '*'
+    :return 0 if successful, -1 if there's any sort of failure. Return status
+        is used by airflow for task instance management and reporting.
+    """
+    config = mc.Config()
+    config.get_executors()
+    clients = None
+    reader = None
+    source_transfer = None
+    vo_client = Client(vospace_certfile=config.proxy_fqn)
+    if mc.TaskType.STORE in config.task_types:
+        clients = clc.ClientCollection(config)
+        source_transfer = tc.VoFitsTransfer(vo_client)
+    else:
+        reader = rdc.VaultReader(vo_client)
+    name_builder = nbc.EntryBuilder(main_app.RACSName)
+    return rc.run_by_todo(
+        config=config,
+        name_builder=name_builder,
+        meta_visitors=META_VISITORS,
+        data_visitors=DATA_VISITORS,
+        store_transfer=source_transfer,
+        clients=clients,
+        metadata_reader=reader,
+    )
 
-    def __init__(self, entry=None):
-        self.fname_in_ad = entry
-        super(BlankName, self).__init__(
-            entry,
-            COLLECTION, 
-            BlankName.BLANK_NAME_PATTERN, 
-            fname_on_disk=entry,
-            entry=entry,
-        )
 
-    def is_valid(self):
-        return True
+def run():
+    """Wraps _run in exception handling, with sys.exit calls."""
+    try:
+        result = _run()
+        sys.exit(result)
+    except Exception as e:
+        logging.error(e)
+        tb = traceback.format_exc()
+        logging.debug(tb)
+        sys.exit(-1)
 
 
-class BlankMapping(cc.TelescopeMapping):
-    def __init__(self, storage_name, headers):
-        super().__init__(storage_name, headers)
+def _run_state():
+    """Uses a state file with a timestamp to control which entries will be
+    processed.
+    """
+    config = mc.Config()
+    config.get_executors()
+    clients = None
+    reader = None
+    source_transfer = None
+    vo_client = Client(vospace_certfile=config.proxy_fqn)
+    if mc.TaskType.STORE in config.task_types:
+        clients = clc.ClientCollection(config)
+        source_transfer = tc.VoFitsTransfer(vo_client)
+    else:
+        reader = rdc.VaultReader(vo_client)
+    name_builder = nbc.EntryBuilder(main_app.RACSName)
+    return rc.run_by_state(
+        config=config,
+        bookmark_name=RACS_BOOKMARK,
+        meta_visitors=META_VISITORS,
+        data_visitors=DATA_VISITORS,
+        store_transfer=source_transfer,
+        metadata_reader=reader,
+        name_builder=name_builder,
+        clients=clients,
+    )
 
-    def accumulate_bp(self, bp, application=None):
-        """Configure the telescope-specific ObsBlueprint at the CAOM model
-        Observation level."""
-        self._logger.debug('Begin accumulate_bp.')
-        super().accumulate_blueprint(bp, APPLICATION)
-        bp.configure_position_axes((1, 2))
-        bp.configure_time_axis(3)
-        bp.configure_energy_axis(4)
-        bp.configure_polarization_axis(5)
-        bp.configure_observable_axis(6)
-        self._logger.debug('Done accumulate_bp.')
 
-    def update(self, observation, file_info, caom_repo_client):
-        """Called to fill multiple CAOM model elements and/or attributes
-        (an n:n relationship between TDM attributes and CAOM attributes).
-        """
-        super().update(observation, file_info, caom_repo_client)
-        return observation
+def run_state():
+    """Wraps _run_state in exception handling."""
+    try:
+        _run_state()
+        sys.exit(0)
+    except Exception as e:
+        logging.error(e)
+        tb = traceback.format_exc()
+        logging.debug(tb)
+        sys.exit(-1)
