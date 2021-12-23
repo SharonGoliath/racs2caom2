@@ -71,14 +71,14 @@ from caom2pipe import caom_composable as cc
 from cfhtProc2caom2 import main_app
 
 
-class BlankFits2caom2Visitor(cc.Fits2caom2Visitor):
+class RACSFits2caom2Visitor(cc.Fits2caom2Visitor):
     def __init__(self, observation, **kwargs):
         super().__init__(observation, **kwargs)
 
     def _get_mapping(self, headers):
-        return main_app.BlanktMapping(self._storage_name, headers)
+        return main_app.RACSMapping(self._storage_name, headers)
 
 
 def visit(observation, **kwargs):
-    return BlankFits2caom2Visitor(observation, **kwargs).visit()
+    return RACSFits2caom2Visitor(observation, **kwargs).visit()
 

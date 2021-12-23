@@ -80,11 +80,17 @@ import logging
 import sys
 import traceback
 
+from caom2pipe import client_composable as clc
+from caom2pipe import manage_composable as mc
+from caom2pipe import name_builder_composable as nbc
+from caom2pipe import reader_composable as rdc
 from caom2pipe import run_composable as rc
-from racs2caom2 import fits2caom2_augmentation
+from caom2pipe import transfer_composable as tc
+from racs2caom2 import fits2caom2_augmentation, main_app
+from vos import Client
 
 
-BLANK_BOOKMARK = 'racs_timestmap'
+RACS_BOOKMARK = 'racs_timestmap'
 META_VISITORS = [fits2caom2_augmentation]
 DATA_VISITORS = []
 
@@ -96,12 +102,26 @@ def _run():
     :return 0 if successful, -1 if there's any sort of failure. Return status
         is used by airflow for task instance management and reporting.
     """
+    config = mc.Config()
+    config.get_executors()
+    clients = None
+    reader = None
+    source_transfer = None
+    vo_client = Client(vospace_certfile=config.proxy_fqn)
+    if mc.TaskType.STORE in config.task_types:
+        clients = clc.ClientCollection(config)
+        source_transfer = tc.VoFitsTransfer(vo_client)
+    else:
+        reader = rdc.VaultReader(vo_client)
+    name_builder = nbc.EntryBuilder(main_app.RACSName)
     return rc.run_by_todo(
-        config=None, 
-        name_builder=None, 
+        config=config,
+        name_builder=name_builder,
         meta_visitors=META_VISITORS,
-        data_visitors=DATA_VISITORS, 
-        chooser=None,
+        data_visitors=DATA_VISITORS,
+        store_transfer=source_transfer,
+        clients=clients,
+        metadata_reader=reader,
     )
 
 
@@ -121,15 +141,27 @@ def _run_state():
     """Uses a state file with a timestamp to control which entries will be
     processed.
     """
-    return rc.run_by_state_ts(
-        config=None, 
-        name_builder=None,
-        bookmark_name=BLANK_BOOKMARK,
+    config = mc.Config()
+    config.get_executors()
+    clients = None
+    reader = None
+    source_transfer = None
+    vo_client = Client(vospace_certfile=config.proxy_fqn)
+    if mc.TaskType.STORE in config.task_types:
+        clients = clc.ClientCollection(config)
+        source_transfer = tc.VoFitsTransfer(vo_client)
+    else:
+        reader = rdc.VaultReader(vo_client)
+    name_builder = nbc.EntryBuilder(main_app.RACSName)
+    return rc.run_by_state(
+        config=config,
+        bookmark_name=RACS_BOOKMARK,
         meta_visitors=META_VISITORS,
-        data_visitors=DATA_VISITORS, 
-        end_time=None,
-        source=None, 
-        chooser=None,
+        data_visitors=DATA_VISITORS,
+        store_transfer=source_transfer,
+        metadata_reader=reader,
+        name_builder=name_builder,
+        clients=clients,
     )
 
 

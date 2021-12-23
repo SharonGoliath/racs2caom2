@@ -91,7 +91,7 @@ def pytest_generate_tests(metafunc):
 @patch('caom2utils.data_util.get_local_headers_from_fits')
 def test_main_app(header_mock, test_name):
     header_mock.side_effect = ac.make_headers_from_file
-    storage_name = main_app.racsName(entry=test_name)
+    storage_name = main_app.RACSName(entry=test_name)
     metadata_reader = rdc.FileMetadataReader()
     metadata_reader.set(storage_name)
     file_type = 'application/fits'
