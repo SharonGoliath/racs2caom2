@@ -81,6 +81,7 @@ import sys
 import traceback
 
 from caom2pipe import client_composable as clc
+from caom2pipe import data_source_composable as dsc
 from caom2pipe import manage_composable as mc
 from caom2pipe import name_builder_composable as nbc
 from caom2pipe import reader_composable as rdc
@@ -170,6 +171,43 @@ def run_state():
     try:
         _run_state()
         sys.exit(0)
+    except Exception as e:
+        logging.error(e)
+        tb = traceback.format_exc()
+        logging.debug(tb)
+        sys.exit(-1)
+
+
+def _run_remote():
+    """
+    Uses a VOSpace directory listing to identify the work to be done.
+
+    :return 0 if successful, -1 if there's any sort of failure. Return status
+        is used by airflow for task instance management and reporting.
+    """
+    config = mc.Config()
+    config.get_executors()
+    vo_client = Client(vospace_certfile=config.proxy_fqn)
+    source_transfer = tc.VoFitsTransfer(vo_client)
+    source = dsc.VaultDataSource(vo_client, config)
+    name_builder = nbc.EntryBuilder(main_app.RACSName)
+    reader = rdc.VaultReader(vo_client)
+    return rc.run_by_todo(
+        config=config,
+        name_builder=name_builder,
+        meta_visitors=META_VISITORS,
+        data_visitors=DATA_VISITORS,
+        source=source,
+        store_transfer=source_transfer,
+        metadata_reader=reader,
+    )
+
+
+def run_remote():
+    """Wraps _run_remote in exception handling, with sys.exit calls."""
+    try:
+        result = _run_remote()
+        sys.exit(result)
     except Exception as e:
         logging.error(e)
         tb = traceback.format_exc()
