@@ -68,7 +68,7 @@
 
 
 from caom2pipe import caom_composable as cc
-from cfhtProc2caom2 import main_app
+from racs2caom2 import main_app
 
 
 class RACSFits2caom2Visitor(cc.Fits2caom2Visitor):
