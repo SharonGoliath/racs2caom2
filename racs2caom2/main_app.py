@@ -240,10 +240,10 @@ class RACSMapping(cc.TelescopeMapping):
         bp.set('Observation.metaRelease', '2023-01-01')
 
         # Clare Chandler via JJK - 21-08-18
-        bp.set('Observation.instrument.name', 'AKSAP')
+        bp.set('Observation.instrument.name', 'ASKAP')
         # From JJK - 27-08-18 - slack
-        bp.set('Observation.proposal.title', 'WALLABY')
-        bp.set('Observation.proposal.project', 'ALLABY')
+        bp.set('Observation.proposal.title', 'RACS')
+        bp.set('Observation.proposal.project', 'RACS')
         bp.set('Observation.proposal.id', 'get_proposal_id(uri)')
 
         # plane level
