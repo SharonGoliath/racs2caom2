@@ -207,7 +207,7 @@ class RACSName(mc.StorageName):
 
     @staticmethod
     def get_product_id_from_file_name(file_name):
-        bits = file_name.split('-')
+        bits = file_name.split('-')[1]
         return bits.split('_')[0]
 
     @staticmethod
