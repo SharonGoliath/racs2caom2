@@ -109,7 +109,7 @@ class RACSName(mc.StorageName):
             self,
             entry=None,
     ):
-        self._collection = COLLECTION
+        self.collection = COLLECTION
         self._entry = entry.replace('.header', '')
         self._vos_url = None
         temp = urlparse(entry.replace('.header', ''))
@@ -194,7 +194,7 @@ class RACSName(mc.StorageName):
         return self._version
 
     def _get_uri(self, file_name, scheme):
-        return cc.build_artifact_uri(file_name, self._collection, scheme)
+        return cc.build_artifact_uri(file_name, self.collection, scheme)
 
     @staticmethod
     def get_obs_id_from_file_name(file_name):
@@ -208,7 +208,7 @@ class RACSName(mc.StorageName):
     @staticmethod
     def get_product_id_from_file_name(file_name):
         bits = file_name.split('_')
-        return bits[2]
+        return bits[1]
 
     @staticmethod
     def get_version(file_name):
