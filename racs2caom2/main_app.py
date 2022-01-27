@@ -91,7 +91,7 @@ __all__ = [
 APPLICATION = 'racs2caom2'
 CIRADA_SCHEME = 'cadc'
 COLLECTION = 'RACS'
-SCHEME = 'casda'
+SCHEME = 'cadc'
 
 
 class RACSName(mc.StorageName):
@@ -255,7 +255,7 @@ class RACSMapping(cc.TelescopeMapping):
         bp.add_fits_attribute('Plane.provenance.name', 'ORIGIN')
         bp.set('Plane.provenance.producer', 'CSIRO')
         # From JJK - 27-08-18 - slack
-        bp.set('Plane.provenance.project', 'WALLABY')
+        bp.set('Plane.provenance.project', 'RACS')
 
         bp.clear('Plane.metaRelease')
         bp.set('Plane.metaRelease', '2023-01-01')
@@ -278,6 +278,7 @@ class RACSMapping(cc.TelescopeMapping):
         # Clare Chandler via JJK - 21-08-18
         bp.set('Chunk.energy.bandpassName', 'S-band')
         bp.add_fits_attribute('Chunk.energy.restfrq', 'RESTFREQ')
+        bp.set("Chunk.energy.specsys", 'TOPOCENT')
         self._logger.debug('End accumulate_wcs')
         self._logger.debug('Done accumulate_bp.')
 
