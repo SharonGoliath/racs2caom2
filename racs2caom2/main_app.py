@@ -208,7 +208,7 @@ class RACSName(mc.StorageName):
     @staticmethod
     def get_product_id_from_file_name(file_name):
         bits = file_name.split('_')
-        return bits[1]
+        return bits[2]
 
     @staticmethod
     def get_version(file_name):
@@ -224,7 +224,7 @@ class RACSMapping(cc.TelescopeMapping):
     def __init__(self, storage_name, headers):
         super().__init__(storage_name, headers)
 
-    def accumulate_bp(self, bp, application=None):
+    def accumulate_blueprint(self, bp, application=None):
         """Configure the telescope-specific ObsBlueprint at the CAOM model
         Observation level."""
         self._logger.debug('Begin accumulate_bp.')
@@ -291,13 +291,13 @@ class RACSMapping(cc.TelescopeMapping):
         return 3600.0 * sqrt(bmaj * bmin)
 
     def get_product_type(self, ext):
-        if '.rms.' in self._uri:
+        if '.rms.' in self.storage_name.file_uri:
             return ProductType.NOISE
         else:
             return ProductType.SCIENCE
 
     def get_proposal_id(self, ext):
-        caom_name = mc.CaomName(self._uri)
+        caom_name = mc.CaomName(self.storage_name.file_uri)
         bits = caom_name.file_name.split('.')
         return f'{bits[0]}.{bits[1]}'
 
