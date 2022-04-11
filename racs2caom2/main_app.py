@@ -201,19 +201,19 @@ class RACSName(mc.StorageName):
         """The obs id is made of the VLASS epoch, tile name, and image centre
         from the file name.
         """
-        bits = file_name.split('_')
-        obs_id = f'{bits[0]}_{bits[1]}'
+        bits = file_name.split('.')
+        obs_id = f'{bits[0]}'
         return obs_id
 
     @staticmethod
     def get_product_id_from_file_name(file_name):
-        bits = file_name.split('_')
-        return bits[2]
+        bits = file_name.split('.')
+        return bits[0]
 
     @staticmethod
     def get_version(file_name):
-        bits = file_name.split('-')[1]
-        return bits.split("_")[0]
+        bits = file_name.split('_')[0]
+        return bits.split("-")[1]
 
     @staticmethod
     def remove_extensions(file_name):
@@ -248,7 +248,7 @@ class RACSMapping(cc.TelescopeMapping):
 
         # plane level
         bp.set('Plane.calibrationLevel', '2')
-        bp.set('Plane.dataProductType', 'cube')
+        bp.set('Plane.dataProductType', 'image')
 
         # Clare Chandler via slack - 28-08-18
         bp.clear('Plane.provenance.name')
@@ -276,7 +276,7 @@ class RACSMapping(cc.TelescopeMapping):
         bp.add_fits_attribute('Chunk.position.axis.function.cd22', 'CDELT2')
 
         # Clare Chandler via JJK - 21-08-18
-        bp.set('Chunk.energy.bandpassName', 'S-band')
+        bp.set('Chunk.energy.bandpassName', 'UHF-band')
         bp.add_fits_attribute('Chunk.energy.restfrq', 'RESTFREQ')
         bp.set("Chunk.energy.specsys", 'TOPOCENT')
         self._logger.debug('End accumulate_wcs')
@@ -291,13 +291,13 @@ class RACSMapping(cc.TelescopeMapping):
         return 3600.0 * sqrt(bmaj * bmin)
 
     def get_product_type(self, ext):
-        if '.rms.' in self.storage_name.file_uri:
+        if '.rms.' in self._storage_name.file_uri:
             return ProductType.NOISE
         else:
             return ProductType.SCIENCE
 
     def get_proposal_id(self, ext):
-        caom_name = mc.CaomName(self.storage_name.file_uri)
+        caom_name = mc.CaomName(self._storage_name.file_uri)
         bits = caom_name.file_name.split('.')
         return f'{bits[0]}.{bits[1]}'
 
