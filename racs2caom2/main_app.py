@@ -109,54 +109,24 @@ class RACSName(mc.StorageName):
             self,
             entry=None,
     ):
-        self.collection = COLLECTION
         self._entry = entry.replace('.header', '')
         self._vos_url = None
         temp = urlparse(entry.replace('.header', ''))
         if temp.scheme == '':
-            self._url = None
             self._file_name = basename(entry.replace('.header', ''))
         else:
             if temp.scheme.startswith('http') or temp.scheme.startswith('vos'):
-                self._url = entry.replace('.header', '')
                 self._file_name = basename(temp.path)
                 self._vos_url = entry.replace('.header', '')
             else:
                 # it's an Artifact URI
-                self._url = None
                 self._file_name = temp.path.split('/')[-1]
-        self._obs_id = RACSName.get_obs_id_from_file_name(self._file_name)
-        self._product_id = RACSName.get_product_id_from_file_name(
-            self._file_name
-        )
-        self._file_id = RACSName.remove_extensions(self._file_name)
+        super().__init__(file_name=self._file_name, source_names=[entry])
         self._version = RACSName.get_version(self._file_name)
-        self._scheme = SCHEME
-        self._source_names = [entry]
-        self._destination_uris = [self.file_uri]
-
-    def __str__(self):
-        return (
-            f'\n'
-            f'      obs_id: {self.obs_id}\n'
-            f'     file_id: {self.file_id}\n'
-            f'   file_name: {self.file_name}\n'
-            f'source_names: {self.source_names}\n'
-            f'    file_uri: {self.file_uri}\n'
-            f'         url: {self.url}\n'
-        )
-
-    @property
-    def file_id(self):
-        return self._file_id
 
     @property
     def file_uri(self):
         return self._get_uri(self._file_name, SCHEME)
-
-    @property
-    def file_name(self):
-        return self._file_name
 
     @property
     def prev(self):
@@ -165,18 +135,6 @@ class RACSName(mc.StorageName):
     @property
     def prev_uri(self):
         return self._get_uri(self.prev, CIRADA_SCHEME)
-
-    @property
-    def product_id(self):
-        return RACSName.get_product_id_from_file_name(self.file_name)
-
-    @property
-    def scheme(self):
-        return self._scheme
-
-    @property
-    def source_names(self):
-        return self._source_names
 
     @property
     def thumb(self):
@@ -193,9 +151,19 @@ class RACSName(mc.StorageName):
     def version(self):
         return self._version
 
-    def _get_uri(self, file_name, scheme):
+    def _get_uri(self, file_name, scheme=CIRADA_SCHEME):
         return cc.build_artifact_uri(file_name, self.collection, scheme)
 
+    def set_file_id(self):
+        self._file_id = RACSName.remove_extensions(self._file_name)
+
+    def set_obs_id(self, **kwargs):
+        self._obs_id = RACSName.get_obs_id_from_file_name(self._file_name)
+
+    def set_product_id(self, **kwargs):
+        self._product_id = RACSName.get_product_id_from_file_name(
+            self._file_name
+        )
     @staticmethod
     def get_obs_id_from_file_name(file_name):
         """The obs id is made of the VLASS epoch, tile name, and image centre

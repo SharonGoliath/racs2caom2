@@ -86,7 +86,7 @@ def test_run_by_state():
 def test_run(run_mock, access_mock):
     run_mock.return_value = 0
     access_mock.return_value = 'https://localhost'
-    test_f_id = 'test_file_id_v0'
+    test_f_id = 'test-file_id-v0'
     test_f_name = f'{test_f_id}.fits'
     getcwd_orig = os.getcwd
     os.getcwd = Mock(return_value=test_main_app.TEST_DATA_DIR)

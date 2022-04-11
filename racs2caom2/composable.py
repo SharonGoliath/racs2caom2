@@ -105,6 +105,8 @@ def _run():
     """
     config = mc.Config()
     config.get_executors()
+    mc.StorageName.collection = config.collection
+    mc.StorageName.scheme = main_app.CIRADA_SCHEME
     clients = None
     reader = None
     source_transfer = None
@@ -144,6 +146,8 @@ def _run_state():
     """
     config = mc.Config()
     config.get_executors()
+    mc.StorageName.collection = config.collection
+    mc.StorageName.scheme = main_app.CIRADA_SCHEME
     clients = None
     reader = None
     source_transfer = None
@@ -187,6 +191,8 @@ def _run_remote():
     """
     config = mc.Config()
     config.get_executors()
+    mc.StorageName.collection = config.collection
+    mc.StorageName.scheme = main_app.CIRADA_SCHEME
     vo_client = Client(vospace_certfile=config.proxy_fqn)
     source_transfer = tc.VoFitsTransfer(vo_client)
     source = dsc.VaultDataSource(vo_client, config)

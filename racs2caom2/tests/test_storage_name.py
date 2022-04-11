@@ -70,4 +70,4 @@ from racs2caom2 import RACSName
 
 
 def test_is_valid():
-    assert RACSName('anything_anytype_anysource_v0').is_valid()
+    assert RACSName('anything-anytype_anysource-v0').is_valid()
