@@ -89,7 +89,7 @@ __all__ = [
 
 
 APPLICATION = 'racs2caom2'
-CIRADA_SCHEME = 'cadc'
+CIRADA_SCHEME = 'casda'
 COLLECTION = 'RACS'
 SCHEME = 'cadc'
 
