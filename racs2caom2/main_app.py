@@ -84,14 +84,15 @@ from caom2pipe import manage_composable as mc
 __all__ = [
     'RACSName',
     'COLLECTION',
-    'APPLICATION', 
+    'APPLICATION',
+    'SCHEME',
 ]
 
 
 APPLICATION = 'racs2caom2'
 CIRADA_SCHEME = 'cadc'
 COLLECTION = 'RACS'
-SCHEME = 'cadc'
+SCHEME = 'casda'
 
 
 class RACSName(mc.StorageName):
@@ -151,7 +152,7 @@ class RACSName(mc.StorageName):
     def version(self):
         return self._version
 
-    def _get_uri(self, file_name, scheme=CIRADA_SCHEME):
+    def _get_uri(self, file_name, scheme=SCHEME):
         return cc.build_artifact_uri(file_name, self.collection, scheme)
 
     def set_file_id(self):
@@ -164,6 +165,7 @@ class RACSName(mc.StorageName):
         self._product_id = RACSName.get_product_id_from_file_name(
             self._file_name
         )
+
     @staticmethod
     def get_obs_id_from_file_name(file_name):
         """The obs id is made of the VLASS epoch, tile name, and image centre
