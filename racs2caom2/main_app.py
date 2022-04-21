@@ -89,9 +89,9 @@ __all__ = [
 
 
 APPLICATION = 'racs2caom2'
-CIRADA_SCHEME = 'casda'
+CIRADA_SCHEME = 'cadc'
 COLLECTION = 'RACS'
-SCHEME = 'cadc'
+SCHEME = 'casda'
 
 
 class RACSName(mc.StorageName):
