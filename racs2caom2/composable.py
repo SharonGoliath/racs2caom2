@@ -114,8 +114,6 @@ def _run():
     if mc.TaskType.STORE in config.task_types:
         clients = clc.ClientCollection(config)
         source_transfer = tc.VoFitsTransfer(vo_client)
-    else:
-        reader = rdc.VaultReader(vo_client)
     name_builder = nbc.EntryBuilder(main_app.RACSName)
     return rc.run_by_todo(
         config=config,
