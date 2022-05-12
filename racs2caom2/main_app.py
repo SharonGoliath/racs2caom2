@@ -153,7 +153,9 @@ class RACSName(mc.StorageName):
         return self._version
 
     def _get_uri(self, file_name, scheme=SCHEME):
-        return cc.build_artifact_uri(file_name, self.collection, scheme)
+        return cc.build_artifact_uri(
+            file_name.replace('.header', ''), self.collection, scheme
+        )
 
     def set_file_id(self):
         self._file_id = RACSName.remove_extensions(self._file_name)
@@ -222,7 +224,7 @@ class RACSMapping(cc.TelescopeMapping):
 
         # Clare Chandler via slack - 28-08-18
         bp.clear('Plane.provenance.name')
-        bp.add_fits_attribute('Plane.provenance.name', 'ORIGIN')
+        bp.add_attribute('Plane.provenance.name', 'ORIGIN')
         bp.set('Plane.provenance.producer', 'CSIRO')
         # From JJK - 27-08-18 - slack
         bp.set('Plane.provenance.project', 'RACS')
@@ -240,14 +242,14 @@ class RACSMapping(cc.TelescopeMapping):
         # chunk level
         bp.clear('Chunk.position.axis.function.cd11')
         bp.clear('Chunk.position.axis.function.cd22')
-        bp.add_fits_attribute('Chunk.position.axis.function.cd11', 'CDELT1')
+        bp.add_attribute('Chunk.position.axis.function.cd11', 'CDELT1')
         bp.set('Chunk.position.axis.function.cd12', 0.0)
         bp.set('Chunk.position.axis.function.cd21', 0.0)
-        bp.add_fits_attribute('Chunk.position.axis.function.cd22', 'CDELT2')
+        bp.add_attribute('Chunk.position.axis.function.cd22', 'CDELT2')
 
         # Clare Chandler via JJK - 21-08-18
         bp.set('Chunk.energy.bandpassName', 'UHF-band')
-        bp.add_fits_attribute('Chunk.energy.restfrq', 'RESTFREQ')
+        bp.add_attribute('Chunk.energy.restfrq', 'RESTFREQ')
         bp.set("Chunk.energy.specsys", 'TOPOCENT')
         self._logger.debug('End accumulate_wcs')
         self._logger.debug('Done accumulate_bp.')
@@ -288,9 +290,8 @@ class RACSMapping(cc.TelescopeMapping):
             )
             self._logger.info(f'Change URI from {old_uri} to {artifact.uri}')
 
-    def update(self, observation, file_info, caom_repo_client):
+    def update(self, observation, file_info, clients):
         """Called to fill multiple CAOM model elements and/or attributes
         (an n:n relationship between TDM attributes and CAOM attributes).
         """
-        super().update(observation, file_info, caom_repo_client)
-        return observation
+        return super().update(observation, file_info, clients)
