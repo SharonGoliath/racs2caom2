@@ -1,0 +1,62 @@
+SIMPLE  =                    T / conforms to FITS standard                      
+BITPIX  =                  -32 / array data type                                
+NAXIS   =                    4 / number of array dimensions                     
+NAXIS1  =                14332                                                  
+NAXIS2  =                14330                                                  
+NAXIS3  =                    1                                                  
+NAXIS4  =                    1                                                  
+EQUINOX =        2000.00000000 / Mean equinox                                   
+RADESYS = 'ICRS    '           / Astrometric system                             
+CTYPE1  = 'RA---SIN'           / WCS projection type for this axis              
+CUNIT1  = 'deg     '           / Axis unit                                      
+CRVAL1  =   3.103724200000E+02 / World coordinate on this axis                  
+CRPIX1  =   7.166500000000E+03 / Reference pixel on this axis                   
+CTYPE2  = 'DEC--SIN'           / WCS projection type for this axis              
+CUNIT2  = 'deg     '           / Axis unit                                      
+CRVAL2  =  -6.254363333333E+01 / World coordinate on this axis                  
+CRPIX2  =   7.165500000000E+03 / Reference pixel on this axis                   
+EXPTIME =   0.000000000000E+00 / Maximum equivalent exposure time (s)           
+GAIN    =   0.000000000000E+00 / Maximum equivalent gain (e-/ADU)               
+SATURATE=   5.000000000000E+04 / Saturation Level (ADU)                         
+COMMENT                                                                         
+SOFTNAME= 'SWarp   '           / The software that processed those data         
+SOFTVERS= '2.38.0  '           / Version of the software                        
+SOFTDATE= '2019-07-10'         / Release date of the software                   
+SOFTAUTH= '2010-2012 IAP/CNRS/UPMC' / Maintainer of the software                
+SOFTINST= 'IAP  http://www.iap.fr' / Institute                                  
+COMMENT                                                                         
+AUTHOR  = 'elenc   '           / Who ran the software                           
+ORIGIN  = 'ASKAPsoft'          / Where it was done                              
+DATE    = '2020-10-16T16:31:31' / When it was started (GMT)                     
+COMBINET= 'WEIGHTED'           / COMBINE_TYPE config parameter for SWarp        
+COMMENT                                                                         
+COMMENT Propagated FITS keywords                                                
+OBJECT  = '        '                                                            
+COMMENT                                                                         
+COMMENT Axis-dependent config parameters                                        
+RESAMPT1= 'BILINEAR'           / RESAMPLING_TYPE config parameter               
+CENTERT1= 'MANUAL  '           / CENTER_TYPE config parameter                   
+PSCALET1= 'MANUAL  '           / PIXELSCALE_TYPE config parameter               
+RESAMPT2= 'BILINEAR'           / RESAMPLING_TYPE config parameter               
+CENTERT2= 'MANUAL  '           / CENTER_TYPE config parameter                   
+PSCALET2= 'MANUAL  '           / PIXELSCALE_TYPE config parameter               
+TIMESYS = 'UTC     '                                                            
+BUNIT   = 'Jy/beam '                                                            
+BMAJ    =  0.00694444444444444                                                  
+BMIN    =  0.00694444444444444                                                  
+BPA     =                  0.0                                                  
+BTYPE   = 'Intensity'                                                           
+TELESCOP= 'ASKAP   '                                                            
+RESTFREQ=          887491000.0                                                  
+CDELT1  =  -0.0006944444444444                                                  
+CDELT2  =   0.0006944444444444                                                  
+CTYPE3  = 'FREQ    '                                                            
+CRVAL3  =          887491000.0                                                  
+CDELT3  =                  1.0                                                  
+CRPIX3  =                  1.0                                                  
+CUNIT3  = 'Hz      '                                                            
+CTYPE4  = 'STOKES  '                                                            
+CRVAL4  =                  1.0                                                  
+CDELT4  =                  1.0                                                  
+CRPIX4  =                  1.0                                                  
+END                                                                             
