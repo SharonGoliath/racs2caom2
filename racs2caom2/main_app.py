@@ -207,7 +207,7 @@ class RACSMapping(cc.TelescopeMapping):
         bp.set('Observation.type', 'OBJECT')
 
         # over-ride use of value from default keyword 'DATE'
-        bp.set('Observation.metaRelease', '2023-01-01')
+        bp.set('Observation.metaRelease', '2022-01-01')
 
         # Clare Chandler via JJK - 21-08-18
         bp.set('Observation.instrument.name', 'ASKAP')
@@ -228,9 +228,9 @@ class RACSMapping(cc.TelescopeMapping):
         bp.set('Plane.provenance.project', 'RACS')
 
         bp.clear('Plane.metaRelease')
-        bp.set('Plane.metaRelease', '2023-01-01')
+        bp.set('Plane.metaRelease', '2022-01-01')
         bp.clear('Plane.dataRelease')
-        bp.set('Plane.dataRelease', '2023-01-01')
+        bp.set('Plane.dataRelease', '2022-01-01')
 
         # artifact level
         bp.clear('Artifact.productType')
