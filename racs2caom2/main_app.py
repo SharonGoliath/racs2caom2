@@ -78,11 +78,12 @@ from urllib.parse import urlparse
 from caom2 import ProductType
 from caom2pipe import astro_composable as ac
 from caom2pipe import caom_composable as cc
-from caom2pipe import manage_composable as mc
+from caom2pipe.manage_composable import CaomName, convert_to_days, StorageName
 
 
 __all__ = [
     'RACSName',
+    'RACSNameNewPattern',
     'COLLECTION',
     'APPLICATION',
     'SCHEME',
@@ -95,7 +96,7 @@ COLLECTION = 'RACS'
 SCHEME = 'casda'
 
 
-class RACSName(mc.StorageName):
+class RACSName(StorageName):
     """Isolate the relationship between the observation id and the
     file names.
 
@@ -192,6 +193,79 @@ class RACSName(mc.StorageName):
         return file_name.replace('.fits', '').replace('.header', '')
 
 
+class RACSNameNewPattern(StorageName):
+    """Isolate the relationship between the observation id and the
+    file names.
+
+    Isolate the zipped/unzipped nature of the file names.
+
+    While tempting, it's not possible to recreate URLs from file names,
+    because some of the URLs are from the QA_REJECTED directories, hence
+    the absence of that functionality in this class.
+    """
+
+    def __init__(
+        self,
+        entry=None,
+    ):
+        self._entry = entry.replace('.header', '')
+        self._vos_url = None
+        temp = urlparse(entry.replace('.header', ''))
+        if temp.scheme == '':
+            self._file_name = basename(entry.replace('.header', ''))
+        else:
+            if temp.scheme.startswith('http') or temp.scheme.startswith('vos'):
+                self._file_name = basename(temp.path)
+                self._vos_url = entry.replace('.header', '')
+            else:
+                # it's an Artifact URI
+                self._file_name = temp.path.split('/')[-1]
+        super().__init__(file_name=self._file_name, source_names=[entry])
+        self._version = None
+        self.set_version()
+
+    @property
+    def prev(self):
+        return f'{self._file_id}_prev.jpg'
+
+    @property
+    def prev_uri(self):
+        return self._get_uri(self.prev, CIRADA_SCHEME)
+
+    @property
+    def thumb(self):
+        return f'{self._file_id}_prev_256.jpg'
+
+    @property
+    def thumb_uri(self):
+        return self._get_uri(self.thumb, CIRADA_SCHEME)
+
+    def is_valid(self):
+        return True
+
+    @property
+    def version(self):
+        return self._version
+
+    def set_file_id(self):
+        self._file_id = RACSName.remove_extensions(self._file_name)
+
+    def set_obs_id(self, **kwargs):
+        bits = self._file_name.split('.')
+        self._obs_id = f'{bits[0]}.{bits[2]}.{bits[3]}.{bits[4]}'
+
+    def set_product_id(self, **kwargs):
+        self._product_id = self._file_id
+
+    def set_version(self):
+        bits = self._file_name.split('.')
+        self._version = bits[5]
+
+    @staticmethod
+    def remove_extensions(file_name):
+        return file_name.replace('.fits', '').replace('.header', '')
+
+
 class RACSMapping(cc.TelescopeMapping):
     def __init__(self, storage_name, headers):
         super().__init__(storage_name, headers)
@@ -211,9 +285,7 @@ class RACSMapping(cc.TelescopeMapping):
         # over-ride use of value from default keyword 'DATE'
         bp.set('Observation.metaRelease', '2022-01-01')
 
-        # Clare Chandler via JJK - 21-08-18
         bp.set('Observation.instrument.name', 'ASKAP')
-        # From JJK - 27-08-18 - slack
         bp.set('Observation.proposal.title', 'RACS')
         bp.set('Observation.proposal.project', 'RACS')
         bp.set('Observation.proposal.id', 'get_proposal_id(uri)')
@@ -222,11 +294,9 @@ class RACSMapping(cc.TelescopeMapping):
         bp.set('Plane.calibrationLevel', '2')
         bp.set('Plane.dataProductType', 'image')
 
-        # Clare Chandler via slack - 28-08-18
         bp.clear('Plane.provenance.name')
         bp.add_attribute('Plane.provenance.name', 'ORIGIN')
         bp.set('Plane.provenance.producer', 'CSIRO')
-        # From JJK - 27-08-18 - slack
         bp.set('Plane.provenance.project', 'RACS')
 
         bp.clear('Plane.metaRelease')
@@ -247,12 +317,43 @@ class RACSMapping(cc.TelescopeMapping):
         bp.set('Chunk.position.axis.function.cd21', 0.0)
         bp.add_attribute('Chunk.position.axis.function.cd22', 'CDELT2')
 
-        # Clare Chandler via JJK - 21-08-18
         bp.set('Chunk.energy.bandpassName', 'UHF-band')
         bp.add_attribute('Chunk.energy.restfrq', 'RESTFREQ')
         bp.set("Chunk.energy.specsys", 'TOPOCENT')
         self._logger.debug('End accumulate_wcs')
         self._logger.debug('Done accumulate_bp.')
+
+        # VP 04-07-22
+        # new keywords
+        # RACS_BND= 'LOW     '           / OBSERVING BAND (LOW,MID,HIGH)
+        # RACS_EPC=                    1 / OBSERVING EPOCH
+        # RACS_DR =                    1 / DATA RELEASE
+        # DATE-OBS= '2019-04-27T23:50:25.622'
+        # DATE-END= '2020-03-28T03:32:16.918'
+
+        # time
+        bp.configure_time_axis(5)
+        bp.set('Chunk.time.axis.axis.ctype', 'TIME')
+        bp.set('Chunk.time.axis.axis.cunit', 'd')
+        bp.set('Chunk.time.axis.function.naxis', '1')
+        bp.set('Chunk.time.axis.function.delta', 'get_time_axis_delta()')
+        bp.set('Chunk.time.axis.function.refCoord.pix', '0.5')
+        bp.set(
+            'Chunk.time.axis.function.refCoord.val',
+            'get_time_axis_val(params)',
+        )
+
+        bp.clear('Observation.instrument.keywords')
+        bp.add_attribute('Observation.instrument.keywords', 'RACS_BND')
+
+    def _get_time_val(self, keyword, ext):
+        dateobs = self._headers[ext].get(keyword)
+        if dateobs is not None:
+            result = ac.get_datetime(dateobs)
+            if result is not None:
+                return result
+            else:
+                return None
 
     def get_position_resolution(self, ext):
         bmaj = self._headers[ext]['BMAJ']
@@ -269,18 +370,24 @@ class RACSMapping(cc.TelescopeMapping):
             return ProductType.SCIENCE
 
     def get_proposal_id(self, ext):
-        caom_name = mc.CaomName(self._storage_name.file_uri)
+        caom_name = CaomName(self._storage_name.file_uri)
         bits = caom_name.file_name.split('.')
         return f'{bits[0]}.{bits[1]}'
 
-    def get_time_refcoord_value(self, ext):
-        dateobs = self._headers[ext].get('DATE-OBS')
-        if dateobs is not None:
-            result = ac.get_datetime(dateobs)
-            if result is not None:
-                return result.mjd
-            else:
-                return None
+    def get_time_axis_delta(self, ext):
+        exptime = self.get_time_exposure(ext)
+        return convert_to_days(exptime)
+
+    def get_time_axis_val(self, ext):
+        return self._get_time_val('DATE-OBS', ext).mjd
+
+    def get_time_exposure(self, ext):
+        date_obs = self._get_time_val('DATE-OBS', ext)
+        date_end = self._get_time_val('DATE-END', ext)
+        result = None
+        if date_obs is not None and date_end is not None:
+            result = date_end.value - date_obs.value
+        return result
 
     def _update_artifact(self, artifact, caom_repo_client):
         if artifact.uri.startswith('vos:cirada'):

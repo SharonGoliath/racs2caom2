@@ -59,4 +59,9 @@ CTYPE4  = 'STOKES  '
 CRVAL4  =                  1.0                                                  
 CDELT4  =                  1.0                                                  
 CRPIX4  =                  1.0                                                  
-END                                                                             
+RACS_BND= 'LOW     '           / OBSERVING BAND (LOW,MID,HIGH)
+RACS_EPC=                    1 / OBSERVING EPOCH
+RACS_DR =                    1 / DATA RELEASE
+DATE-OBS= '2019-04-27T23:50:25.622'
+DATE-END= '2020-03-28T03:32:16.918'
+END

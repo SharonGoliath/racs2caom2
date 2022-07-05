@@ -68,7 +68,7 @@
 #
 
 from caom2pipe.manage_composable import StorageName
-from racs2caom2 import COLLECTION, RACSName, SCHEME
+from racs2caom2 import COLLECTION, RACSName, RACSNameNewPattern, SCHEME
 
 
 def test_is_valid():
@@ -85,6 +85,26 @@ def test_storage_name():
         test_subject = RACSName(test_f_name)
         assert test_subject.destination_uris[0] == f'casda:RACS/{test_f_name}'
         assert test_subject.file_uri == f'casda:RACS/{test_f_name}'
+    finally:
+        StorageName.scheme = orig_scheme
+        StorageName.collection = orig_collection
+
+
+def test_storage_name_new_pattern():
+    orig_scheme = StorageName.scheme
+    orig_collection = StorageName.collection
+    try:
+        StorageName.collection = COLLECTION
+        StorageName.scheme = SCHEME
+        test_f_name = 'RACS-low.1.DR1.0310+25A.I.v01.fits'
+        test_subject = RACSNameNewPattern(test_f_name)
+        assert test_subject.destination_uris[0] == f'casda:RACS/{test_f_name}'
+        assert test_subject.file_uri == f'casda:RACS/{test_f_name}'
+        assert test_subject.obs_id == 'RACS-low.DR1.0310+25A.I', 'obs id'
+        assert (
+            test_subject.product_id == 'RACS-low.1.DR1.0310+25A.I.v01'
+        ), 'product id'
+        assert test_subject.version == 'v01', 'version'
     finally:
         StorageName.scheme = orig_scheme
         StorageName.collection = orig_collection
