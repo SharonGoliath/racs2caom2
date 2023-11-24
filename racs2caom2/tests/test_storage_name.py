@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # ***********************************************************************
 # ******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 # *************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
@@ -67,24 +66,17 @@
 # ***********************************************************************
 #
 
-from caom2pipe.manage_composable import StorageName
-from racs2caom2 import COLLECTION, RACSName, SCHEME
+from racs2caom2 import RACSName
 
 
 def test_is_valid():
     assert RACSName('anything-anytype_anysource-v0').is_valid()
 
 
-def test_storage_name():
-    orig_scheme = StorageName.scheme
-    orig_collection = StorageName.collection
-    try:
-        StorageName.collection = COLLECTION
-        StorageName.scheme = SCHEME
-        test_f_name = 'RACS-DR1_0000+12A.fits'
-        test_subject = RACSName(test_f_name)
-        assert test_subject.destination_uris[0] == f'casda:RACS/{test_f_name}'
-        assert test_subject.file_uri == f'casda:RACS/{test_f_name}'
-    finally:
-        StorageName.scheme = orig_scheme
-        StorageName.collection = orig_collection
+def test_storage_name(test_config):
+    test_f_name = 'RACS-DR1_0000+12A.fits'
+    test_subject = RACSName(test_f_name)
+    assert (
+        test_subject.destination_uris[0] == f'{test_config.scheme}:{test_config.collection}/{test_f_name}'
+    ), test_subject
+    assert test_subject.file_uri == f'{test_config.scheme}:{test_config.collection}/{test_f_name}', test_subject

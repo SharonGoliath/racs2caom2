@@ -4,15 +4,9 @@
 import glob
 import os
 import sys
-import imp
 from setuptools.command.test import test as TestCommand
 from setuptools import find_packages
-
 from setuptools import setup
-
-import distutils.cmd
-import distutils.log
-import subprocess
 
 # read the README.md file and return as string.
 def readme():
@@ -90,7 +84,7 @@ setup(name=PACKAGENAME,
       use_2to3=False,
       setup_requires=[],
       entry_points=entry_points,
-      python_requires='>=3.9.*',
+      python_requires='>=3.12',
       packages=find_packages(),
       package_data={PACKAGENAME: ['data/*']},
       data_files=[('.config', ['config/config.yml', 'config/state.yml'])],
@@ -98,7 +92,7 @@ setup(name=PACKAGENAME,
         'Natural Language :: English',
         'License :: OSI Approved :: GNU Affero General Public License v3',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3.9'
+        'Programming Language :: Python :: 3.12'
       ],
       cmdclass = {
           'coverage': PyTest,

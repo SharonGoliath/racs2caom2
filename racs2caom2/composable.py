@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # ***********************************************************************
 # ******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 # *************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
@@ -68,11 +67,11 @@
 #
 
 """
-Implements the default entry point functions for the workflow 
+Implements the default entry point functions for the workflow
 application.
 
 'run' executes based on either provided lists of work, or files on disk.
-'run_by_state' executes incrementally, usually based on time-boxed 
+'run_by_state' executes incrementally, usually based on time-boxed
 intervals.
 """
 
@@ -106,7 +105,8 @@ def _run():
     config = mc.Config()
     config.get_executors()
     mc.StorageName.collection = config.collection
-    mc.StorageName.scheme = main_app.SCHEME
+    mc.StorageName.scheme = config.scheme
+    mc.StorageName.preview_scheme = config.preview_scheme
     clients = None
     reader = None
     source_transfer = None
@@ -144,8 +144,8 @@ def _run_state():
     """
     config = mc.Config()
     config.get_executors()
-    mc.StorageName.collection = config.collection
-    mc.StorageName.scheme = main_app.SCHEME
+    mc.StorageName.scheme = config.scheme
+    mc.StorageName.preview_scheme = config.preview_scheme
     clients = None
     reader = None
     source_transfer = None
@@ -158,7 +158,6 @@ def _run_state():
     name_builder = nbc.EntryBuilder(main_app.RACSName)
     return rc.run_by_state(
         config=config,
-        bookmark_name=RACS_BOOKMARK,
         meta_visitors=META_VISITORS,
         data_visitors=DATA_VISITORS,
         store_transfer=source_transfer,
@@ -190,7 +189,8 @@ def _run_remote():
     config = mc.Config()
     config.get_executors()
     mc.StorageName.collection = config.collection
-    mc.StorageName.scheme = main_app.SCHEME
+    mc.StorageName.scheme = config.scheme
+    mc.StorageName.preview_scheme = config.preview_scheme
     vo_client = Client(vospace_certfile=config.proxy_fqn)
     source_transfer = tc.VoFitsTransfer(vo_client)
     source = dsc.VaultDataSource(vo_client, config)
@@ -201,7 +201,7 @@ def _run_remote():
         name_builder=name_builder,
         meta_visitors=META_VISITORS,
         data_visitors=DATA_VISITORS,
-        source=source,
+        sources=[source],
         store_transfer=source_transfer,
         metadata_reader=reader,
     )

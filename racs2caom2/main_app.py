@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # ***********************************************************************
 # ******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 # *************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
@@ -68,7 +67,7 @@
 #
 
 """
-This module implements the ObsBlueprint mapping, as well as the workflow 
+This module implements the ObsBlueprint mapping, as well as the workflow
 entry point that executes the workflow.
 """
 
@@ -81,18 +80,7 @@ from caom2pipe import caom_composable as cc
 from caom2pipe import manage_composable as mc
 
 
-__all__ = [
-    'RACSName',
-    'COLLECTION',
-    'APPLICATION',
-    'SCHEME',
-]
-
-
-APPLICATION = 'racs2caom2'
-CIRADA_SCHEME = 'cadc'
-COLLECTION = 'RACS'
-SCHEME = 'casda'
+__all__ = ['RACSName']
 
 
 class RACSName(mc.StorageName):
@@ -107,8 +95,8 @@ class RACSName(mc.StorageName):
     """
 
     def __init__(
-            self,
-            entry=None,
+        self,
+        entry=None,
     ):
         self._entry = entry.replace('.header', '')
         self._vos_url = None
@@ -126,36 +114,8 @@ class RACSName(mc.StorageName):
         self._version = RACSName.get_version(self._file_name)
 
     @property
-    def file_uri(self):
-        return self._get_uri(self._file_name, SCHEME)
-
-    @property
-    def prev(self):
-        return f'{self._file_id}_prev.jpg'
-
-    @property
-    def prev_uri(self):
-        return self._get_uri(self.prev, CIRADA_SCHEME)
-
-    @property
-    def thumb(self):
-        return f'{self._file_id}_prev_256.jpg'
-
-    @property
-    def thumb_uri(self):
-        return self._get_uri(self.thumb, CIRADA_SCHEME)
-
-    def is_valid(self):
-        return True
-
-    @property
     def version(self):
         return self._version
-
-    def _get_uri(self, file_name, scheme=SCHEME):
-        return cc.build_artifact_uri(
-            file_name.replace('.header', ''), self.collection, scheme
-        )
 
     def set_file_id(self):
         self._file_id = RACSName.remove_extensions(self._file_name)
@@ -164,9 +124,7 @@ class RACSName(mc.StorageName):
         self._obs_id = RACSName.get_obs_id_from_file_name(self._file_name)
 
     def set_product_id(self, **kwargs):
-        self._product_id = RACSName.get_product_id_from_file_name(
-            self._file_name
-        )
+        self._product_id = RACSName.get_product_id_from_file_name(self._file_name)
 
     @staticmethod
     def get_obs_id_from_file_name(file_name):
@@ -193,14 +151,14 @@ class RACSName(mc.StorageName):
 
 
 class RACSMapping(cc.TelescopeMapping):
-    def __init__(self, storage_name, headers):
-        super().__init__(storage_name, headers)
+    def __init__(self, storage_name, headers, clients, observable, observation, config):
+        super().__init__(storage_name, headers, clients, observable, observation, config)
 
-    def accumulate_blueprint(self, bp, application=None):
+    def accumulate_blueprint(self, bp):
         """Configure the telescope-specific ObsBlueprint at the CAOM model
         Observation level."""
         self._logger.debug('Begin accumulate_bp.')
-        super().accumulate_blueprint(bp, APPLICATION)
+        super().accumulate_blueprint(bp)
         bp.configure_position_axes((1, 2))
         bp.configure_energy_axis(3)
         bp.configure_polarization_axis(4)
@@ -211,22 +169,18 @@ class RACSMapping(cc.TelescopeMapping):
         # over-ride use of value from default keyword 'DATE'
         bp.set('Observation.metaRelease', '2022-01-01')
 
-        # Clare Chandler via JJK - 21-08-18
         bp.set('Observation.instrument.name', 'ASKAP')
-        # From JJK - 27-08-18 - slack
         bp.set('Observation.proposal.title', 'RACS')
         bp.set('Observation.proposal.project', 'RACS')
-        bp.set('Observation.proposal.id', 'get_proposal_id(uri)')
+        bp.set('Observation.proposal.id', 'get_proposal_id()')
 
         # plane level
         bp.set('Plane.calibrationLevel', '2')
         bp.set('Plane.dataProductType', 'image')
 
-        # Clare Chandler via slack - 28-08-18
         bp.clear('Plane.provenance.name')
         bp.add_attribute('Plane.provenance.name', 'ORIGIN')
         bp.set('Plane.provenance.producer', 'CSIRO')
-        # From JJK - 27-08-18 - slack
         bp.set('Plane.provenance.project', 'RACS')
 
         bp.clear('Plane.metaRelease')
@@ -247,11 +201,9 @@ class RACSMapping(cc.TelescopeMapping):
         bp.set('Chunk.position.axis.function.cd21', 0.0)
         bp.add_attribute('Chunk.position.axis.function.cd22', 'CDELT2')
 
-        # Clare Chandler via JJK - 21-08-18
         bp.set('Chunk.energy.bandpassName', 'UHF-band')
         bp.add_attribute('Chunk.energy.restfrq', 'RESTFREQ')
         bp.set("Chunk.energy.specsys", 'TOPOCENT')
-        self._logger.debug('End accumulate_wcs')
         self._logger.debug('Done accumulate_bp.')
 
     def get_position_resolution(self, ext):
@@ -282,16 +234,8 @@ class RACSMapping(cc.TelescopeMapping):
             else:
                 return None
 
-    def _update_artifact(self, artifact, caom_repo_client):
+    def _update_artifact(self, artifact):
         if artifact.uri.startswith('vos:cirada'):
             old_uri = artifact.uri
-            artifact.uri = old_uri.replace(
-                'vos:cirada', 'vos://cadc.nrc.ca~vault/cirada'
-            )
+            artifact.uri = old_uri.replace('vos:cirada', 'vos://cadc.nrc.ca~vault/cirada')
             self._logger.info(f'Change URI from {old_uri} to {artifact.uri}')
-
-    def update(self, observation, file_info, clients):
-        """Called to fill multiple CAOM model elements and/or attributes
-        (an n:n relationship between TDM attributes and CAOM attributes).
-        """
-        return super().update(observation, file_info, clients)

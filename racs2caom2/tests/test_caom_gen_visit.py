@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # ***********************************************************************
 # ******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 # *************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
@@ -70,10 +69,9 @@
 from mock import patch
 
 from racs2caom2 import fits2caom2_augmentation, main_app
-from racs2caom2.main_app import COLLECTION, SCHEME
 from caom2.diff import get_differences
 from caom2pipe import astro_composable as ac
-from caom2pipe.manage_composable import StorageName, write_obs_to_file
+from caom2pipe.manage_composable import write_obs_to_file
 from caom2pipe.manage_composable import read_obs_from_file
 from caom2pipe import reader_composable as rdc
 
@@ -91,44 +89,34 @@ def pytest_generate_tests(metafunc):
 
 
 @patch('caom2utils.data_util.get_local_headers_from_fits')
-def test_main_app(header_mock, test_name):
-    orig_scheme = StorageName.scheme
-    orig_collection = StorageName.collection
+def test_main_app(header_mock, test_config, test_name):
+    header_mock.side_effect = ac.make_headers_from_file
+    storage_name = main_app.RACSName(entry=test_name)
+    metadata_reader = rdc.FileMetadataReader()
+    metadata_reader.set(storage_name)
+    file_type = 'application/fits'
+    metadata_reader.file_info[storage_name.file_uri].file_type = file_type
+    kwargs = {
+        'storage_name': storage_name,
+        'metadata_reader': metadata_reader,
+        'config': test_config,
+    }
+    expected_fqn = test_name.replace('.fits.header', '.expected.xml')
+    in_fqn = expected_fqn.replace('.expected', '.in')
+    actual_fqn = expected_fqn.replace('expected', 'actual')
+    observation = None
+    if os.path.exists(in_fqn):
+        observation = read_obs_from_file(in_fqn)
+    observation = fits2caom2_augmentation.visit(observation, **kwargs)
+    expected = read_obs_from_file(expected_fqn)
     try:
-        StorageName.collection = COLLECTION
-        StorageName.scheme = SCHEME
-        header_mock.side_effect = ac.make_headers_from_file
-        storage_name = main_app.RACSName(entry=test_name)
-        metadata_reader = rdc.FileMetadataReader()
-        metadata_reader.set(storage_name)
-        file_type = 'application/fits'
-        metadata_reader.file_info[storage_name.file_uri].file_type = file_type
-        kwargs = {
-            'storage_name': storage_name,
-            'metadata_reader': metadata_reader,
-        }
-        expected_fqn = test_name.replace('.fits.header', '.expected.xml')
-        in_fqn = expected_fqn.replace('.expected', '.in')
-        actual_fqn = expected_fqn.replace('expected', 'actual')
-        observation = None
-        if os.path.exists(in_fqn):
-            observation = read_obs_from_file(in_fqn)
-        observation = fits2caom2_augmentation.visit(observation, **kwargs)
-        expected = read_obs_from_file(expected_fqn)
-        try:
-            compare_result = get_differences(expected, observation)
-        except Exception as e:
-            write_obs_to_file(observation, actual_fqn)
-            raise e
-        if compare_result is not None:
-            write_obs_to_file(observation, actual_fqn)
-            compare_text = '\n'.join([r for r in compare_result])
-            msg = (
-                f'Differences found in observation {expected.observation_id}\n'
-                f'{compare_text}'
-            )
-            raise AssertionError(msg)
-        # assert False  # cause I want to see logging messages
-    finally:
-        StorageName.scheme = orig_scheme
-        StorageName.collection = orig_collection
+        compare_result = get_differences(expected, observation)
+    except Exception as e:
+        write_obs_to_file(observation, actual_fqn)
+        raise e
+    if compare_result is not None:
+        write_obs_to_file(observation, actual_fqn)
+        compare_text = '\n'.join([r for r in compare_result])
+        msg = f'Differences found in observation {expected.observation_id}\n' f'{compare_text}'
+        raise AssertionError(msg)
+    # assert False  # cause I want to see logging messages

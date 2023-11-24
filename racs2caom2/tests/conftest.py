@@ -2,7 +2,7 @@
 # ******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 # *************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 #
-#  (c) 2021.                            (c) 2021.
+#  (c) 2023.                            (c) 2023.
 #  Government of Canada                 Gouvernement du Canada
 #  National Research Council            Conseil national de recherches
 #  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -66,20 +66,29 @@
 # ***********************************************************************
 #
 
+from os.path import dirname, join, realpath
+from caom2pipe.manage_composable import Config, StorageName
+import pytest
 
-from caom2pipe import caom_composable as cc
-from racs2caom2 import main_app
-
-
-class RACSFits2caom2Visitor(cc.Fits2caom2Visitor):
-    def __init__(self, observation, **kwargs):
-        super().__init__(observation, **kwargs)
-
-    def _get_mapping(self, headers):
-        return main_app.RACSMapping(
-            self._storage_name, headers, self._clients, self._observable, self._observation, self._config
-        )
+COLLECTION = 'RACS'
+SCHEME = 'casda'
+PREVIEW_SCHEME = 'cadc'
 
 
-def visit(observation, **kwargs):
-    return RACSFits2caom2Visitor(observation, **kwargs).visit()
+@pytest.fixture()
+def test_config():
+    config = Config()
+    config.collection = COLLECTION
+    config.preview_scheme = PREVIEW_SCHEME
+    config.scheme = SCHEME
+    config.logging_level = 'INFO'
+    StorageName.collection = config.collection
+    StorageName.preview_scheme = config.preview_scheme
+    StorageName.scheme = config.scheme
+    return config
+
+
+@pytest.fixture()
+def test_data_dir():
+    this_dir = dirname(realpath(__file__))
+    return join(this_dir, 'data')
