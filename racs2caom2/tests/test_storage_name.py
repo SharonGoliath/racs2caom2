@@ -70,7 +70,7 @@ from racs2caom2 import RACSName
 
 
 def test_is_valid():
-    assert RACSName('anything-anytype_anysource-v0').is_valid()
+    assert RACSName('RACS-low.1.DR1.0310+25A.I.v01.fits').is_valid()
 
 
 def test_storage_name(test_config):
@@ -80,3 +80,16 @@ def test_storage_name(test_config):
         test_subject.destination_uris[0] == f'{test_config.scheme}:{test_config.collection}/{test_f_name}'
     ), test_subject
     assert test_subject.file_uri == f'{test_config.scheme}:{test_config.collection}/{test_f_name}', test_subject
+    assert test_subject.version is None, test_subject
+
+
+def test_storage_name_new_pattern(test_config):
+    test_f_name = 'RACS-low.1.DR1.0310+25A.I.v01.fits'
+    test_subject = RACSName(test_f_name)
+    assert test_subject.destination_uris[0] == f'{test_config.scheme}:{test_config.collection}/{test_f_name}'
+    assert test_subject.file_uri == f'{test_config.scheme}:{test_config.collection}/{test_f_name}'
+    assert test_subject.obs_id == 'RACS-low.DR1.0310+25A.I', 'obs id'
+    assert (
+        test_subject.product_id == 'RACS-low.1.DR1.0310+25A.I.v01'
+    ), 'product id'
+    assert test_subject.version == 'v01', 'version'

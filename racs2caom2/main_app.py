@@ -77,13 +77,13 @@ from urllib.parse import urlparse
 from caom2 import ProductType
 from caom2pipe import astro_composable as ac
 from caom2pipe import caom_composable as cc
-from caom2pipe import manage_composable as mc
+from caom2pipe.manage_composable import CaomName, convert_to_days, StorageName
 
 
 __all__ = ['RACSName']
 
 
-class RACSName(mc.StorageName):
+class RACSName(StorageName):
     """Isolate the relationship between the observation id and the
     file names.
 
@@ -111,7 +111,7 @@ class RACSName(mc.StorageName):
                 # it's an Artifact URI
                 self._file_name = temp.path.split('/')[-1]
         super().__init__(file_name=self._file_name, source_names=[entry])
-        self._version = RACSName.get_version(self._file_name)
+        self.set_version()
 
     @property
     def version(self):
@@ -121,33 +121,22 @@ class RACSName(mc.StorageName):
         self._file_id = RACSName.remove_extensions(self._file_name)
 
     def set_obs_id(self, **kwargs):
-        self._obs_id = RACSName.get_obs_id_from_file_name(self._file_name)
+        bits = self._file_name.split('.')
+        if len(bits) == 2:
+            self._obs_id = self._file_id
+        else:
+            self._obs_id = f'{bits[0]}.{bits[2]}.{bits[3]}.{bits[4]}'
 
     def set_product_id(self, **kwargs):
-        self._product_id = RACSName.get_product_id_from_file_name(self._file_name)
+        self._product_id = self._file_id
 
-    @staticmethod
-    def get_obs_id_from_file_name(file_name):
-        """The obs id is made of the VLASS epoch, tile name, and image centre
-        from the file name.
-        """
-        bits = file_name.split('.')
-        obs_id = f'{bits[0]}'
-        return obs_id
-
-    @staticmethod
-    def get_product_id_from_file_name(file_name):
-        bits = file_name.split('.')
-        return bits[0]
-
-    @staticmethod
-    def get_version(file_name):
-        bits = file_name.split('_')[0]
-        return bits.split("-")[1]
-
-    @staticmethod
-    def remove_extensions(file_name):
-        return file_name.replace('.fits', '').replace('.header', '')
+    def set_version(self):
+        bits = self._file_name.split('.')
+        if len(bits) == 2:
+            # DR1 file names do not have a version number
+            self._version = None
+        else:
+            self._version = bits[5]
 
 
 class RACSMapping(cc.TelescopeMapping):
@@ -204,7 +193,39 @@ class RACSMapping(cc.TelescopeMapping):
         bp.set('Chunk.energy.bandpassName', 'UHF-band')
         bp.add_attribute('Chunk.energy.restfrq', 'RESTFREQ')
         bp.set("Chunk.energy.specsys", 'TOPOCENT')
+
+        # VP 04-07-22
+        # new keywords
+        # RACS_BND= 'LOW     '           / OBSERVING BAND (LOW,MID,HIGH)
+        # RACS_EPC=                    1 / OBSERVING EPOCH
+        # RACS_DR =                    1 / DATA RELEASE
+        # DATE-OBS= '2019-04-27T23:50:25.622'
+        # DATE-END= '2020-03-28T03:32:16.918'
+
+        # time
+        bp.configure_time_axis(5)
+        bp.set('Chunk.time.axis.axis.ctype', 'TIME')
+        bp.set('Chunk.time.axis.axis.cunit', 'd')
+        bp.set('Chunk.time.axis.function.naxis', '1')
+        bp.set('Chunk.time.axis.function.delta', 'get_time_axis_delta()')
+        bp.set('Chunk.time.axis.function.refCoord.pix', '0.5')
+        bp.set(
+            'Chunk.time.axis.function.refCoord.val',
+            'get_time_axis_val(params)',
+        )
+
+        bp.clear('Observation.instrument.keywords')
+        bp.add_attribute('Observation.instrument.keywords', 'RACS_BND')
         self._logger.debug('Done accumulate_bp.')
+
+    def _get_time_val(self, keyword, ext):
+        dateobs = self._headers[ext].get(keyword)
+        if dateobs is not None:
+            result = ac.get_datetime_mjd(dateobs)
+            if result is not None:
+                return result
+            else:
+                return None
 
     def get_position_resolution(self, ext):
         bmaj = self._headers[ext]['BMAJ']
@@ -221,18 +242,24 @@ class RACSMapping(cc.TelescopeMapping):
             return ProductType.SCIENCE
 
     def get_proposal_id(self, ext):
-        caom_name = mc.CaomName(self._storage_name.file_uri)
+        caom_name = CaomName(self._storage_name.file_uri)
         bits = caom_name.file_name.split('.')
         return f'{bits[0]}.{bits[1]}'
 
-    def get_time_refcoord_value(self, ext):
-        dateobs = self._headers[ext].get('DATE-OBS')
-        if dateobs is not None:
-            result = ac.get_datetime(dateobs)
-            if result is not None:
-                return result.mjd
-            else:
-                return None
+    def get_time_axis_delta(self, ext):
+        exptime = self.get_time_exposure(ext)
+        return convert_to_days(exptime)
+
+    def get_time_axis_val(self, ext):
+        return self._get_time_val('DATE-OBS', ext).mjd
+
+    def get_time_exposure(self, ext):
+        date_obs = self._get_time_val('DATE-OBS', ext)
+        date_end = self._get_time_val('DATE-END', ext)
+        result = None
+        if date_obs is not None and date_end is not None:
+            result = date_end.value - date_obs.value
+        return result
 
     def _update_artifact(self, artifact):
         if artifact.uri.startswith('vos:cirada'):

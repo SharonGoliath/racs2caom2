@@ -18,6 +18,9 @@
   </caom2:telescope>
   <caom2:instrument>
     <caom2:name>ASKAP</caom2:name>
+    <caom2:keywords>
+      <caom2:keyword>LOW</caom2:keyword>
+    </caom2:keywords>
   </caom2:instrument>
   <caom2:planes>
     <caom2:plane caom2:id="ab4dee88-1d95-45ba-8f38-2bbf0fc20cbd" caom2:metaProducer="racs2caom2/0.1.0">
@@ -37,7 +40,7 @@
           <caom2:productType>science</caom2:productType>
           <caom2:releaseType>data</caom2:releaseType>
           <caom2:contentType>application/fits</caom2:contentType>
-          <caom2:contentLength>5022</caom2:contentLength>
+          <caom2:contentLength>5175</caom2:contentLength>
           <caom2:parts>
             <caom2:part caom2:id="ac9d6399-2bda-402f-a8fd-34bdaf40d1c8">
               <caom2:name>0</caom2:name>
@@ -47,6 +50,7 @@
                   <caom2:positionAxis1>1</caom2:positionAxis1>
                   <caom2:positionAxis2>2</caom2:positionAxis2>
                   <caom2:energyAxis>3</caom2:energyAxis>
+                  <caom2:timeAxis>5</caom2:timeAxis>
                   <caom2:polarizationAxis>4</caom2:polarizationAxis>
                   <caom2:position>
                     <caom2:axis>
@@ -101,6 +105,24 @@
                     <caom2:restfrq>887491000.0</caom2:restfrq>
                     <caom2:bandpassName>UHF-band</caom2:bandpassName>
                   </caom2:energy>
+                  <caom2:time>
+                    <caom2:axis>
+                      <caom2:axis>
+                        <caom2:ctype>TIME</caom2:ctype>
+                        <caom2:cunit>d</caom2:cunit>
+                      </caom2:axis>
+                      <caom2:function>
+                        <caom2:naxis>1</caom2:naxis>
+                        <caom2:delta>0.003879097985253776</caom2:delta>
+                        <caom2:refCoord>
+                          <caom2:pix>0.5</caom2:pix>
+                          <caom2:val>58600.99335210648</caom2:val>
+                        </caom2:refCoord>
+                      </caom2:function>
+                    </caom2:axis>
+                    <caom2:timesys>UTC</caom2:timesys>
+                    <caom2:exposure>0.0</caom2:exposure>
+                  </caom2:time>
                   <caom2:polarization>
                     <caom2:axis>
                       <caom2:axis>
